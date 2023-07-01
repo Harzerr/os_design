@@ -1,0 +1,80 @@
+section .data
+    timeMsg db "The current time is: ", 0
+    colon db ":", 0
+    newline db 10, 13, 0
+section .text
+    global _start
+
+_start:
+    ;获取系统时间
+    mov ah, 0x02 ; 调用BIOS中断0x1A, 功能号2, 从RTC获取时间
+    int 0x1A ; 触发中断
+    ;返回值存储在时间结构体中
+    mov ah, ch ; 时
+    mov al, cl ; 分
+    mov bh, dh ; 秒
+    
+    ; 显示时间信息
+    mov ah, 0x0e ; 调用BIOS中断0x10, 功能号14h, 显示字符
+    ; 显示 “The current time is: ”
+    mov si, timeMsg ; 存储字符串
+    call printString
+
+    ; 显示时
+    xor ax, ax ; 用于断点的AX清零
+    mov al, ah ; 把时保存在AL中
+    call printByte ; 把时显示在屏幕上
+
+    ; 显示分
+    mov al, cl ; 把分保存在AL中
+    call printByte ; 把分显示在屏幕上
+
+    ; 显示秒
+    mov al, bh ; 把秒保存在AL中
+    call printByte ; 把秒显示在屏幕上
+    
+    ; 换行
+    mov si, newline ; 存储字符串
+    call printString
+
+    ;退出
+    mov ah, 0x4C ;退出程序
+    xor al, al ;返回值设置为0
+    int 0x21
+
+printByte:
+    ; 把数字转化为字符
+    pusha ; 保护寄存器
+
+    xor ah, ah ; 把高位清零
+    mov bl, 10 ; 把10存储到BL中，用于十进制转化
+    div bl ; 除以10
+    add ax, '0' ; 把数字转化为字符
+    mov bl, ah ; 保存余数
+    mov ah, 0x0e ; 调用BIOS中断0x10, 功能号14h, 显示字符
+    int 0x10 ; 触发中断
+    
+    mov al, bl ; 显示余数
+    add al, '0' ; 把数字转化为字符
+    mov ah, 0x0e ; 调用BIOS中断0x10, 功能号14h, 显示字符
+    int 0x10 ; 触发中断
+
+    popa ; 恢复寄存器
+    ret ; 返回
+
+printString:
+    ;循环显示字符串中的字符
+    pusha ; 保护寄存器
+
+    charLoop:
+        lodsb ; 加载字符串中的一个字符到AL
+        or al, al ; 遇到字符串结尾停止循环
+        jz endLoop
+
+        mov ah, 0x0e ; 调用BIOS中断0x10, 功能号14h, 显示字符
+        int 0x10 ; 触发中断
+        jmp charLoop
+
+    endLoop:
+        popa ; 恢复寄存器
+        ret ; 返回

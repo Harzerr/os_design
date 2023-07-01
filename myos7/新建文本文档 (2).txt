@@ -1,0 +1,9 @@
+__asm__(".code16gcc\n");
+extern int puts(char *str);
+extern int setmode(); 
+extern int initdisplay(); 
+extern int initdisp();
+extern int prompt();
+extern int myputc(char ch);
+extern char mygetc();
+int printdata(unsigned short int n);
